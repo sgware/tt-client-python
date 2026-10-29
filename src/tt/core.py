@@ -43,12 +43,12 @@ FAIL = 'FAIL'
 """The string used by the Tandem Tales server for turn types where an action fails."""
 
 PASS = 'PASS'
-"""The string used by the Tandem Tales server for turns types that pass control to the partner."""
+"""The string used by the Tandem Tales server for turn types that pass control to the partner."""
 
 ENV_PASSWORD = "password"
 """The name of the environment variable where the agent's password is stored."""
 
-ENV_API_KEY = "apikey";
+ENV_API_KEY = "apikey"
 """The name of the environment variable where the agent's API key is stored."""
 
 EMBED_URL = 'https://openrouter.ai/api/v1/embeddings'
@@ -58,7 +58,7 @@ EMBED_MODEL = 'qwen/qwen3-embedding-8b'
 """The model to be used for large language model text embedding requests."""
 
 EMBED_TOKENS_LIMIT = 1000000
-"""The maximum number of input tokens that can use for text embedding requests."""
+"""The maximum number of input tokens that can be used for text embedding requests."""
 
 COMPLETE_URL = 'https://openrouter.ai/api/v1/chat/completions'
 """The URL to which large language model text completion requests will be sent."""
@@ -67,10 +67,10 @@ COMPLETE_MODEL = 'deepseek/deepseek-v4-flash-0731'
 """The large language model to be used for text completion requests."""
 
 COMPLETE_IN_TOKENS_LIMIT = 1000000
-"""The maximum number of input tokens that can use for text completion requests."""
+"""The maximum number of input tokens that can be used for text completion requests."""
 
 COMPLETE_OUT_TOKENS_LIMIT = 1000000
-"""The maximum number of output tokens that can use for text completion requests."""
+"""The maximum number of output tokens that can be used for text completion requests."""
 
 COMPLETE_SEED = 0
 """The seed used for large language model text completion requests."""
@@ -110,7 +110,7 @@ class _ClientInput(threading.Thread):
                     if message['type'] == 'Stop':
                         self.stopped = True
                     self.received.put(message)
-                # If an error occurs while pasring, add the exception to the queue.
+                # If an error occurs while parsing, add the exception to the queue.
                 except Exception as exception:
                     self.received.put(exception)
                     break
@@ -120,7 +120,7 @@ class _ClientInput(threading.Thread):
         Returns the next message waiting in the queue or blocks until a message
         becomes available. Once the socket has been closed, this method will
         return None. If `type` is provided, this method will raise an exception
-        unless the next message is of the expected type. If an exception occured
+        unless the next message is of the expected type. If an exception occurred
         on the thread that was receiving and parsing messages, this method will
         raise that exception so that it can be handled on the client's main
         thread.
@@ -161,7 +161,7 @@ class Client(ABC, threading.Thread):
     A Tandem Tales client connects to a server to participate in a paired
     storytelling session. The abstract method `on_choice` must be implemented
     to return the index of the desired choice when it is this client's turn.
-    A client can be run as thread or directy by calling the `run` method.
+    A client can be run as thread or directly by calling the `run` method.
     
     Attributes:
         factory (Factory): The factory object that created this client.
@@ -179,7 +179,7 @@ class Client(ABC, threading.Thread):
         choices (list[dict[str, Any]]): The list of choices currently available
             to make.
         stop (dict[str, Any]): The stop message received from the server.
-        session(str): The session ID received from the server after the session.
+        session (str): The session ID received from the server after the session.
     
     Arguments:
         name (str): The name this client will use on the server.
@@ -198,13 +198,14 @@ class Client(ABC, threading.Thread):
     """
     
     def __init__(self, name, password, world, role, partner, key, url='localhost', port=DEFAULT_PORT):
+        super().__init__()
         if password is None and ENV_PASSWORD in os.environ:
             password = os.environ[ENV_PASSWORD]
         if key is None and ENV_API_KEY in os.environ:
             key = os.environ[ENV_API_KEY]
         self.factory = None
         self.external = ExternalAPI(key)
-        self.join = {
+        self.join_message = {
             "type": "Join",
             "name": name,
             "password": password,
@@ -223,15 +224,15 @@ class Client(ABC, threading.Thread):
         self.session = None
     
     def __str__(self):
-        str = f"[Client: name={self.join['name']}"
-        if 'password' in self.join:
+        str = f"[Client: name={self.join_message['name']}"
+        if 'password' in self.join_message:
             str += '; password="***"'
-        if 'world' in self.join:
-            str += f"; world=\"{self.join['name']}\""
-        if 'role' in self.join:
-            str += f"; role=\"{self.join['role']}\""
-        if 'partner' in self.join:
-            str += f"; partner=\"{self.join['partner']}\""
+        if 'world' in self.join_message:
+            str += f"; world=\"{self.join_message['world']}\""
+        if 'role' in self.join_message:
+            str += f"; role=\"{self.join_message['role']}\""
+        if 'partner' in self.join_message:
+            str += f"; partner=\"{self.join_message['partner']}\""
         return str + ']'
     
     def run(self):
@@ -260,7 +261,7 @@ class Client(ABC, threading.Thread):
         9. `on_disconnect` will always be called if the client connected.
         """
         # Warn if the password and API key are not set.
-        if self.join['password'] == None and not ENV_PASSWORD in os.environ:
+        if self.join_message['password'] == None and not ENV_PASSWORD in os.environ:
             self.on_warning(f"The environment variable \"{ENV_PASSWORD}\" is not set. This agent will not use a password.")
         if self.external.key == None and not ENV_API_KEY in os.environ:
             self.on_warning(f"The environment variable \"{ENV_API_KEY}\" is not set. This agent will not be able to use the external API.")
@@ -273,9 +274,9 @@ class Client(ABC, threading.Thread):
             connect = self.receive('Connect')
             if connect != None:
                 if connect['version'] != VERSION:
-                    self.on_warning(f"This client is using version {VERSION} of the communication protocol, but the server is using version {connect['version']}. This may cause misconnunications.")
+                    self.on_warning(f"This client is using version {VERSION} of the communication protocol, but the server is using version {connect['version']}. This may cause miscommunications.")
                 self.on_connect(connect)
-                self.send(self.join)
+                self.send(self.join_message)
             # Wait for the start message.
             start = self.receive('Start')
             if start != None:
@@ -312,7 +313,7 @@ class Client(ABC, threading.Thread):
                         if not self.input.stopped:
                             self.send(choice)
                     # If the story has ended, notify this client.
-                    elif 'ending' in self.status:
+                    elif self.status.get('ending') is not None:
                         self.on_end(self.status['ending'])
                 # Immediately acknowledge stop messages.
                 elif message['type'] == "Stop":
@@ -327,7 +328,7 @@ class Client(ABC, threading.Thread):
                 elif message['type'] == "End":
                     self.session = message['session']
                     break
-                # Handle errors reports by the server.
+                # Handle errors reported by the server.
                 elif message['type'] == "Error":
                     self.on_error(message['message'])
                 # Handle unrecognized message types.
@@ -335,7 +336,7 @@ class Client(ABC, threading.Thread):
                     m = str(message)
                     if len(m) > 40:
                         m = m[:40] + '...'
-                    self.on_error("The message \"{m}\" is not recognized.")
+                    self.on_error(f"The message \"{m}\" is not recognized.")
         # Register an uncaught exception.
         except Exception as exception:
             uncaught = exception
@@ -434,7 +435,7 @@ class Client(ABC, threading.Thread):
         """
         Called when the server sends a story world status update.
         
-        status['history'] is all turns that have happend so far.
+        status['history'] is all turns that have happened so far.
         status['state'] gives the current value of all variables.
         status['ending'] gives the story's ending, or None if it is ongoing.
         status['descriptions'] gives descriptions of all visible entities.
@@ -445,7 +446,7 @@ class Client(ABC, threading.Thread):
     def on_choice(self, status) -> int:
         """
         Called when the server sends a story world status update that requires
-        this client to chose what turn will happen next. This method must
+        this client to choose what turn will happen next. This method must
         return the index (starting at 0) of the action it wants to take. The
         list of choices can be found in status['choices'].
         
@@ -467,7 +468,7 @@ class Client(ABC, threading.Thread):
     
     def on_stop(self, message):
         """
-        Always called at the end of the client's life is the session started.
+        Always called at the end of the client's life if the session started.
         
         The `message` is a string explaining why the client stopped, and it may
         be None.
@@ -510,7 +511,7 @@ class ExternalAPI:
             embedding model.
         complete_in_tokens (int): The number of input tokens used so far by the
             text completion model.
-        complete_out_tokens (int): The number of output toeksn used so far by
+        complete_out_tokens (int): The number of output tokens used so far by
             the text completion model.
     
     Arguments:
@@ -577,11 +578,11 @@ class ExternalAPI:
         elif max != None and value > max:
             raise ValueError(f"{name} must be <= {max}.")
     
-    def embed(self, text, dim=1028):
+    def embed(self, text, dim=1024):
         """
         Queries the external text embedding API and returns its response as an
         array of floats. Each time this method is called, the number of tokens
-        used it added to `embed_tokens`. If the number of tokens used exceeds
+        used is added to `embed_tokens`. If the number of tokens used exceeds
         `EMBED_TOKENS_LIMIT`, this method will raise an exception.
         
         Arguments:
@@ -639,7 +640,7 @@ class ExternalAPI:
             maxt (int): The maximum number of tokens the model may use to
                 generate its response.
             reasoning (str): The level of reasoning used by the large language
-                model during text compoetion. Values include `max`, `high`,
+                model during text completion. Values include `max`, `high`,
                 `low`, and `none`.
             temp (float): Influences the randomness of the response. A value of
                 0.0 will give deterministic responses. The max value is 2.0.
@@ -780,7 +781,7 @@ class _StopClient(_Operation):
             if len(self.factory.waiting) == 0:
                 self.factory._create()
         else:
-            self.factory.waiting.remove(client)
+            self.factory.waiting.remove(self.client)
 
 class _CloseFactory(_Operation):
     """ Begin a factory's shut down process. """
@@ -845,7 +846,7 @@ class Factory(ABC):
            factory's limit on the max number of clients.
         4. `on_close` runs when the factory is closed via the `close` method or
            if a client raises an exception. `on_close` is not called if the
-           factory was interrupted. `on_close` always runs on the thrad that
+           factory was interrupted. `on_close` always runs on the thread that
            called this method, even if `close` was called by a different thread.
         5. Before shutting down, the factory closes all clients that have not
            started their sessions and waits for all clients that have started
@@ -883,7 +884,7 @@ class Factory(ABC):
         except Exception as exception:
             if self.uncaught == None:
                 self.uncaught = exception
-        # If there were no problems, return null.
+        # If there were no problems, return None.
         if self.uncaught == None:
             return None
         else:

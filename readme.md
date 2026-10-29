@@ -1,6 +1,6 @@
 # Tandem Tales Client (Python)
 
-This Python libray provides the abstract `tt.Client` and `tt.Factory` classes
+This Python library provides the abstract `tt.Client` and `tt.Factory` classes
 that can be extended to create [Tandem Tales](https://sgware.github.io/tt)
 agents. See
 [this example Python agent](https://github.com/sgware/tt-random-agent-python)

@@ -13,7 +13,7 @@ dependencies = [
 [project.urls]
 "Homepage" = "https://sgware.github.io/tt-client-python"
 "Repository" = "https://github.com/sgware/tt-client-python"
-"Documentation" = "https://github.com/sgware/tt-client-python"
+"Documentation" = "https://sgware.github.io/tt-client-python"
 
 [tool.setuptools.packages.find]
 where = ["src"]
