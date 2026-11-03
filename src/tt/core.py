@@ -21,7 +21,7 @@ import ssl
 import json
 import requests
 
-VERSION = "0.10.0"
+VERSION = "1.0.0"
 """The client's version of the Tandem Tales protocol."""
 
 DEFAULT_PORT = 9005

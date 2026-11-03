@@ -1,7 +1,7 @@
 [project]
 name = "tt"
 authors = [ { name = "Stephen G. Ware", email = "sgware@gmail.com" } ]
-version = "0.9.0"
+version = "1.0.0"
 description = "Python library for Tandem Tales clients."
 readme = "readme.md"
 license = "GPL-3.0"
